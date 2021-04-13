@@ -1,0 +1,468 @@
+
+<html>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<title>Assignment 3</title>
+<canvas id="webglcanvas" width="700" height="700"></canvas>
+
+<script>
+
+
+var vertexShaderSource_1 =
+
+       `attribute vec3 a_coords;
+	    attribute vec3 a_colors;
+	 	uniform mat4 u_RotY;
+		uniform mat4 u_RotX;
+		uniform mat4 u_RotZ;
+		uniform mat4 u_Scale;
+		uniform mat4 u_Trans;
+		uniform mat4 u_Pers;
+		varying vec3 v_color;
+        
+		void main() {
+	
+            mat4 M = u_Trans*u_RotX*u_RotY*u_RotZ*u_Scale;
+            gl_Position = u_Pers*M*vec4(a_coords, 1.0);
+			v_color = a_colors;
+        }`;
+
+
+var fragmentShaderSource_1 =
+
+       `precision mediump float;
+        varying vec3 v_color;
+        void main() {
+            gl_FragColor = vec4(v_color, 1.0);
+        }`;
+
+
+var vertexShaderSource_2 =
+
+       `attribute vec3 a_coords;
+	    attribute vec3 a_colors;
+	 	uniform mat4 u_RotY;
+		uniform mat4 u_RotX;
+		uniform mat4 u_RotZ;
+		uniform mat4 u_Scale;
+		uniform mat4 u_Trans;
+		uniform mat4 u_Pers;
+		varying vec3 v_color;
+        
+		void main() {
+			mat4 M = u_Trans*u_RotX*u_RotY*u_RotZ*u_Scale;
+            gl_Position = u_Pers*M*vec4(a_coords, 1.0);
+			v_color = a_colors;
+        }`;
+
+var fragmentShaderSource_2 =
+
+       `precision mediump float;
+        varying vec3 v_color;
+        void main() {
+            gl_FragColor = vec4(v_color, 1.0);
+        }`;
+
+var gl;
+var a_coords_location;
+var a_coords_buffer;
+var a_colors_location;
+var a_colors_buffer;
+
+var coords;
+var colors;
+var indices;
+
+var bufferInd;
+
+var u_matrix_rotateX_location;
+var u_matrix_rotateY_location;
+var u_matrix_scale_location;
+var u_matrix_pers_location;
+
+angle_x=0;
+angle_y=0;
+angle_z=0;
+
+var thetaX = 30;
+var thetaY = 30;
+var thetaZ= 0;
+
+var theta2X = 30;
+var theta2Y = 30;
+var theta2Z= 30+angle_z;
+
+var less=0;
+var check_ty=0;
+
+function passAttribData(data, att_buffer, loc) { 
+
+gl.bindBuffer(gl.ARRAY_BUFFER, att_buffer);
+gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
+gl.vertexAttribPointer(loc, 3, gl.FLOAT, false, 0, 0);
+gl.enableVertexAttribArray(loc);
+
+
+}
+
+
+
+
+
+function translate(tx, ty, tz, loc) {
+var transMat = new Float32Array( [1.0,  0.0,  0.0,  0.0,
+                                  0.0,  1.0,  0.0,  0.0,
+                                  0.0,  0.0,  1.0,  0.0,
+                                  tx,   ty,   tz,  1.0] );
+gl.uniformMatrix4fv(loc, false, transMat);
+ }
+ 
+ 
+//SCALE
+function scale(sx, sy, sz, loc) { 
+var scaleMat = new Float32Array( [sx,    0.0,  0.0,  0.0,
+                                  0.0,  sy,    0.0,  0.0,
+                                  0.0,  0.0,   sz,   0.0,
+                                  0.0,  0.0,  0.0,  1.0] );
+								  
+gl.uniformMatrix4fv(loc, false, scaleMat);
+
+}
+
+
+
+//ROTATE ALONG X AXIS 
+function rotate_X(thetaX, loc) { 
+var rad = (thetaX+angle_x)*Math.PI/180;
+var rotateMatX = new Float32Array( [1.0,  0.0,            0.0,            0.0,
+                                    0.0,  Math.cos(rad),  Math.sin(rad),  0.0,
+                                    0.0, -Math.sin(rad),  Math.cos(rad),  0.0,
+                                    0.0,  0.0,            0.0,            1.0] );
+gl.uniformMatrix4fv(loc, false, rotateMatX);
+}
+
+
+//ROTATE ALONG Y AXIS
+function rotate_Y(thetaY, loc) {
+var rad = (thetaY+angle_y)*Math.PI/180;
+var rotateMatY = new Float32Array( [Math.cos(rad),  0.0,  -Math.sin(rad),  0.0,
+                                    0.0,            1.0,  0.0,            0.0,
+                                    Math.sin(rad),  0.0,  Math.cos(rad),  0.0,
+                                    0.0,            0.0,  0.0,            1.0] );
+gl.uniformMatrix4fv(loc, false, rotateMatY); 
+}
+
+
+//ROTATE ALONG Z AXIS
+function rotate_Z(thetaZ, loc) {
+var rad =(thetaZ)*Math.PI/180;
+var rotateMatZ = new Float32Array( [Math.cos(rad),  -Math.sin(rad),  0.0,  0.0,
+                                    Math.sin(rad),   Math.cos(rad),  0.0,  0.0,
+                                    0.0,             0.0,            1.0,  0.0,
+                                    0.0,             0.0,            0.0,  1.0] );	 
+									
+gl.uniformMatrix4fv(loc, false, rotateMatZ);
+}
+
+
+
+//PERSPECTIVE
+function perspective(aspect, fov, near, far, loc) {
+var pa = 1.0/(aspect*Math.tan((fov/2)*Math.PI/180));
+var pb = 1.0/(Math.tan((fov/2)*Math.PI/180));
+var pc = -(far+near) / (far-near);
+var pd = -(2.0*far*near) / (far-near);
+
+var persMat = new Float32Array( [pa,   0.0,  0.0,  0.0,
+                                 0.0,  pb,   0,    0.0,
+                                 0.0,  0.0,  pc,  -1.0,
+                                 0.0,  0.0,  pd,   0.0] );
+								 
+gl.uniformMatrix4fv(loc, false, persMat);
+ }
+
+
+
+
+//COORDINATES+COLORS+INDICES OF THE CUBE AND LID
+function model(){
+coords = new Float32Array( [ // Front face
+                                      -0.5, -0.5,  0.5,
+                                       0.5, -0.5,  0.5,
+                                       0.5,  0.5,  0.5,
+                                      -0.5,  0.5,  0.5,
+
+                                      // Back face
+                                      -0.5, -0.5, -0.5,
+                                      -0.5,  0.5, -0.5,
+                                       0.5,  0.5, -0.5,
+                                       0.5, -0.5, -0.5,
+
+                                      // Top face
+                                      -0.5,  0.5, -0.5,
+                                      -0.5,  0.5,  0.5,
+                                       0.5,  0.5,  0.5,
+                                       0.5,  0.5, -0.5,
+
+                                      // Bottom face
+                                      -0.5, -0.5, -0.5,
+                                       0.5, -0.5, -0.5,
+                                       0.5, -0.5,  0.5,
+                                      -0.5, -0.5,  0.5,
+
+                                      // Right face
+                                       0.5, -0.5, -0.5,
+                                       0.5,  0.5, -0.5,
+                                       0.5,  0.5,  0.5,
+                                       0.5, -0.5,  0.5,
+
+                                      // Left face
+                                      -0.5, -0.5, -0.5,
+                                      -0.5, -0.5,  0.5,
+                                      -0.5,  0.5,  0.5,
+                                      -0.5,  0.5, -0.5] );
+
+    colors = new Float32Array( 	[1.0, 0.0, 0.0,
+									1.0, 0.0, 0.0,
+									1.0, 0.0, 0.0,
+									1.0, 0.0, 0.0,
+
+									0.0, 1.0, 0.0,
+									0.0, 1.0, 0.0,
+									0.0, 1.0, 0.0,
+									0.0, 1.0, 0.0,
+
+									0.0, 0.0, 1.0,
+									0.0, 0.0, 1.0,
+									0.0, 0.0, 1.0,
+									0.0, 0.0, 1.0,
+
+									1.0, 1.0, 0.0,
+									1.0, 1.0, 0.0,
+									1.0, 1.0, 0.0,
+									1.0, 1.0, 0.0,
+
+									0.0, 1.0, 1.0,
+									0.0, 1.0, 1.0,
+									0.0, 1.0, 1.0,
+									0.0, 1.0, 1.0,
+
+									1.0, 0.0, 1.0,
+									1.0, 0.0, 1.0,
+									1.0, 0.0, 1.0,
+									1.0, 0.0, 1.0] );
+
+	indices = new Uint8Array([
+                                    0, 1, 2,      0, 2, 3,    // Front face
+                                    4, 5, 6,      4, 6, 7,    // Back face
+                                    8, 9, 10,     8, 10, 11,  // Top face
+                                    12, 13, 14,   12, 14, 15, // Bottom face
+                                    16, 17, 18,   16, 18, 19, // Right face
+                                    20, 21, 22,   20, 22, 23  // Left face
+									]);
+
+}
+
+function draw_crate() {										
+    rotate_X(thetaX,u_matrix_rotateX_location);
+    rotate_Y(thetaY,u_matrix_rotateY_location);	
+	rotate_Z(thetaZ,u_matrix_rotateZ_location);	
+
+    var s = 0.5;
+    scale(s,s,s,u_matrix_scale_location)
+									  
+	var tx = 0.0, ty = 0.0, tz = -3.0;
+	translate(tx,ty,tz,u_matrix_trans_location);
+
+									   
+									   
+										  
+	var aspect = 1.0;
+    var fov = 45.0;
+    var far = 5.0;
+    var near = 2.0;
+
+	perspective(aspect,fov,near,far,u_matrix_pers_location);
+	
+
+	passAttribData(coords,a_coords_buffer, a_coords_location);
+	passAttribData(colors,a_colors_buffer, a_colors_location);
+
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, bufferInd);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
+
+
+
+	gl.clearColor(0.9,0.9,0.9,1.0);
+    gl.enable(gl.DEPTH_TEST);
+    gl.enable(gl.CULL_FACE);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    gl.drawElements(gl.TRIANGLES, 3*12, gl.UNSIGNED_BYTE, 0);
+}
+
+function draw_lid() {
+	
+	theta2Z= 30+angle_z;
+    rotate_X(theta2X,u_matrix_rotateX_location);
+    rotate_Y(theta2Y,u_matrix_rotateY_location);	
+	rotate_Z(theta2Z,u_matrix_rotateZ_location);									
+										
+
+
+    var sx = 0.6;
+	var sy = 0.03;
+	var sz = 0.6;
+	scale(sx,sy,sz,u_matrix_scale_location);
+
+
+    val_y=0.35-less;
+	check_ty=val_y;
+	val_x=0.0;
+	val_z=-3.0;
+	console.log(val_y);
+	var tx = val_x, ty = val_y, tz = val_z;
+    translate(tx,ty,tz,u_matrix_trans_location);
+									  
+	var aspect = 1.0;
+    var fov = 45.0;
+    var far = 5.0;
+    var near = 2.0;
+	perspective(aspect,fov,near,far,u_matrix_pers_location);									  									 	
+
+	passAttribData(coords,a_coords_buffer, a_coords_location);
+	passAttribData(colors,a_colors_buffer, a_colors_location);
+
+
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, bufferInd);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);	
+
+    gl.clear(gl.DEPTH_BUFFER_BIT);
+    gl.drawElements(gl.TRIANGLES, 3*12, gl.UNSIGNED_BYTE, 0);
+}
+
+function createProgram(gl, vertexShaderSource, fragmentShaderSource) {
+
+  var vsh = gl.createShader( gl.VERTEX_SHADER );
+  gl.shaderSource( vsh, vertexShaderSource );
+  gl.compileShader( vsh );
+
+  var fsh = gl.createShader( gl.FRAGMENT_SHADER );
+  gl.shaderSource( fsh, fragmentShaderSource );
+  gl.compileShader( fsh );
+
+  var prog = gl.createProgram();
+  gl.attachShader( prog, vsh );
+  gl.attachShader( prog, fsh );
+  gl.linkProgram( prog );
+
+  return prog;
+}
+
+
+
+function initGL_1() {
+    var prog1 = createProgram( gl, vertexShaderSource_1, fragmentShaderSource_1 );
+    gl.useProgram(prog1);
+
+    a_coords_location = gl.getAttribLocation(prog1, "a_coords");
+    a_coords_buffer = gl.createBuffer();
+
+    a_colors_location = gl.getAttribLocation(prog1, "a_colors");
+    a_colors_buffer = gl.createBuffer();
+   
+    bufferInd = gl.createBuffer();
+
+    u_matrix_rotateX_location = gl.getUniformLocation(prog1, "u_RotX");
+    u_matrix_rotateY_location = gl.getUniformLocation(prog1, "u_RotY");
+	u_matrix_rotateZ_location = gl.getUniformLocation(prog1, "u_RotZ");
+	u_matrix_scale_location = gl.getUniformLocation(prog1, "u_Scale");
+	u_matrix_trans_location = gl.getUniformLocation(prog1, "u_Trans");
+	u_matrix_pers_location = gl.getUniformLocation(prog1, "u_Pers");
+
+}
+
+function initGL_2() {
+    var prog2 = createProgram( gl, vertexShaderSource_2, fragmentShaderSource_2 );
+    gl.useProgram(prog2);
+
+    a_coords_location = gl.getAttribLocation(prog2, "a_coords");
+    a_coords_buffer = gl.createBuffer();
+
+    a_colors_location = gl.getAttribLocation(prog2, "a_colors");
+    a_colors_buffer = gl.createBuffer();
+   
+    bufferInd = gl.createBuffer();
+
+    u_matrix_rotateX_location = gl.getUniformLocation(prog2, "u_RotX");
+    u_matrix_rotateY_location = gl.getUniformLocation(prog2, "u_RotY");
+	u_matrix_rotateZ_location = gl.getUniformLocation(prog2, "u_RotZ");
+	u_matrix_scale_location = gl.getUniformLocation(prog2, "u_Scale");
+	u_matrix_trans_location = gl.getUniformLocation(prog2, "u_Trans");
+	u_matrix_pers_location = gl.getUniformLocation(prog2, "u_Pers");
+}
+
+function init() {
+    var canvas = document.getElementById("webglcanvas");
+    gl = canvas.getContext("webgl");
+
+	model();
+    
+	initGL_1();
+	draw_crate();
+	
+	initGL_2();
+    draw_lid();
+
+}
+
+	window.addEventListener('keydown',this.check,false); 
+	function check(e) {
+    var code = e.keyCode;
+	//LEFT KEY
+	if(code==37)
+	{
+	angle_y=angle_y-10;	
+	draw_crate();
+	draw_lid();
+	}
+	
+	//RIGHT KEY
+    else if (code == 39){
+	angle_y=angle_y+10;	
+	draw_crate();
+	draw_lid();
+    }
+	
+	//UP KEY
+    else if(code==40){
+	if(check_ty>=0.2){
+	angle_z=angle_z-10;
+	less=less+0.05;
+	}
+	draw_crate();
+	draw_lid();
+	}
+	
+	//DOWN LEY
+	else if(code==38)
+	{	
+	if(check_ty!=.35){
+	angle_z=angle_z+10;
+	less=less-0.05;
+	}
+	draw_crate();
+	draw_lid();
+	}
+	
+	}
+
+
+
+init();
+
+</script>
+
+
+
+</html>

@@ -1,0 +1,290 @@
+<html>
+<title>Assignment 2</title>
+<canvas id="webglcanvas" width="500" height="500"></canvas>
+
+<script>
+
+    var canvas = document.getElementById("webglcanvas"); 
+    var  gl = canvas.getContext("webgl");
+	scaleFactor=0;
+	angleX=0;
+	angleY=0;
+
+	//VERTEX SHADER SOURCE
+    var vertexShaderSource =
+       `attribute vec3 a_coords;
+	    attribute vec3 a_colors;
+	    attribute vec3 a_colors_border;
+	 	uniform mat4 u_RotY;
+		uniform mat4 u_RotX;
+		uniform vec3 black_or_color;
+		uniform mat4 u_scaleFactor;
+		varying vec3 v_color;
+		varying vec3 v_color_border;
+		varying vec3 v_selectedColor;
+		
+        
+		void main() {
+            gl_Position = u_scaleFactor*u_RotX*u_RotY*vec4(a_coords, 1.0);
+			v_color = a_colors;
+			v_color_border=a_colors_border;
+			v_selectedColor=black_or_color;
+        }`;
+
+	//FRAGMENT SHADER SOURCE
+	var fragmentShaderSource =
+       `precision mediump float;
+        varying vec3 v_color;
+		varying vec3 v_color_border;
+		varying vec3 v_selectedColor;
+        void main() {
+            if(v_selectedColor.x==1.0&&v_selectedColor.y==1.0&&v_selectedColor.z==1.0){
+            gl_FragColor = vec4(abs(v_color.x),abs(v_color.y),abs(v_color.z), 1.0);
+			}
+			else
+			{
+			gl_FragColor = vec4(v_color_border, 1.0);
+			}
+        }`;
+
+	//VERTEX SHADER CREATED
+    var vsh = gl.createShader( gl.VERTEX_SHADER );
+    gl.shaderSource( vsh, vertexShaderSource );
+    gl.compileShader( vsh );
+	
+	//FRAGMENT SHADER CREATED
+    var fsh = gl.createShader( gl.FRAGMENT_SHADER );
+    gl.shaderSource( fsh, fragmentShaderSource );
+    gl.compileShader( fsh );
+    
+    var prog = gl.createProgram(); 
+    
+	//ATTACHING SHADERS
+    gl.attachShader( prog, vsh ); 
+    gl.attachShader( prog, fsh );
+    gl.linkProgram( prog ); 
+    gl.useProgram(prog); 
+	
+	drawCube();
+	
+	//FUNCTION FOR DRAWING CUBE
+	function drawCube(){
+    var a_coords_location = gl.getAttribLocation(prog, "a_coords");
+
+    var coords = new Float32Array( [
+					 				   // Front face
+								      -0.5, -0.5,  0.5,
+								       0.5, -0.5,  0.5,
+								       0.5,  0.5,  0.5,
+								      -0.5,  0.5,  0.5,
+
+								      // Back face
+								      -0.5, -0.5, -0.5,
+								      -0.5,  0.5, -0.5,
+								       0.5,  0.5, -0.5,
+								       0.5, -0.5, -0.5,
+
+								      // Top face
+								      -0.5,  0.5, -0.5,
+								      -0.5,  0.5,  0.5,
+								       0.5,  0.5,  0.5,
+								       0.5,  0.5, -0.5,
+
+								      // Bottom face
+								      -0.5, -0.5, -0.5,
+								       0.5, -0.5, -0.5,
+								       0.5, -0.5,  0.5,
+								      -0.5, -0.5,  0.5,
+
+								      // Right face
+								       0.5, -0.5, -0.5,
+								       0.5,  0.5, -0.5,
+								       0.5,  0.5,  0.5,
+								       0.5, -0.5,  0.5,
+
+								      // Left face
+								      -0.5, -0.5, -0.5,
+								      -0.5, -0.5,  0.5,
+								      -0.5,  0.5,  0.5,
+								      -0.5,  0.5, -0.5
+									] );
+	
+	//ASSOCIATING DATA FOR COORDINATES
+    var a_coords_buffer = gl.createBuffer(); 
+    gl.bindBuffer(gl.ARRAY_BUFFER, a_coords_buffer); 
+    gl.bufferData(gl.ARRAY_BUFFER, coords, gl.STATIC_DRAW); 
+    gl.vertexAttribPointer(a_coords_location, 3, gl.FLOAT, false, 0, 0); 
+    gl.enableVertexAttribArray(a_coords_location);
+	
+	//DATA FOR BLACK BORDER
+	var black_or_color_location=gl.getUniformLocation(prog,"black_or_color");
+	var temp=new Float32Array([0.0,0.0,0.0]);
+	gl.uniform3fv(black_or_color_location,temp);
+	
+	
+	var a_colors_border_location = gl.getAttribLocation(prog, "a_colors_border");
+    var black_border = new Float32Array( [
+									0.0, 0.0, 0.0,
+									0.0, 0.0, 0.0,
+									0.0, 0.0, 0.0,
+									0.0, 0.0, 0.0,
+
+									0.0, 0.0, 0.0,
+									0.0, 0.0, 0.0,
+									0.0, 0.0, 0.0,
+									0.0, 0.0, 0.0,
+									
+									0.0, 0.0, 0.0,
+									0.0, 0.0, 0.0,
+									0.0, 0.0, 0.0,
+									0.0, 0.0, 0.0,
+
+									0.0, 0.0, 0.0,
+									0.0, 0.0, 0.0,
+									0.0, 0.0, 0.0,
+									0.0, 0.0, 0.0,
+
+									0.0, 0.0, 0.0,
+									0.0, 0.0, 0.0,
+									0.0, 0.0, 0.0,
+									0.0, 0.0, 0.0,
+
+									0.0, 0.0, 0.0,
+									0.0, 0.0, 0.0,
+									0.0, 0.0, 0.0,
+									0.0, 0.0, 0.0,
+									] );
+	//ASSOCIATING DATA FOR BORDER
+	var a_colors_border_buffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, a_colors_border_buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, black_border, gl.STATIC_DRAW);
+    gl.vertexAttribPointer(a_colors_border_location, 3, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(a_colors_border_location);									
+	
+	//DEFINING INDEX BUFFER
+	var indices = new Uint8Array([
+									0, 1, 2,      0, 2, 3,    // Front face
+                                    4, 5, 6,      4, 6, 7,    // Back face
+                                    8, 9, 10,     8, 10, 11,  // Top face
+                                    12, 13, 14,   12, 14, 15, // Bottom face
+                                    16, 17, 18,   16, 18, 19, // Right face
+                                    20, 21, 22,   20, 22, 23  // Left face
+								]);
+								
+	//ASSOCIATING INDEX DATA							
+	var bufferInd = gl.createBuffer();
+	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, bufferInd);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
+	
+	
+	//SCALING DATA FOR BACKGROUND BLACK CUBE(FOR BORDER)	
+	u_scaleFactor_location = gl.getUniformLocation(prog, "u_scaleFactor");
+	var Sx = 1.05+scaleFactor;
+	var Sy = 1.05+scaleFactor;
+	var Sz = 1.03+scaleFactor;
+	var scaleFactorMatrix = new Float32Array( [ Sx,   0.0,  0.0,  0.0,
+												0.0,  Sy,   0.0,  0.0,
+												0.0,  0.0,  Sz,   0.0,
+												0.0,  0.0,  0.0,  1.0] );
+										 
+	gl.uniformMatrix4fv(u_scaleFactor_location, false, scaleFactorMatrix);
+	
+	//ROTATION DATA FOR Y AXIS
+	var u_rotateY_location = gl.getUniformLocation(prog, "u_RotY");
+	var thetaY = 25+angleY;
+	var rad = thetaY*Math.PI/180;
+    var rotateYMatrix = new Float32Array( [Math.cos(rad),  0.0,  -Math.sin(rad),  0.0,
+										   0.0,            1.0,   0.0,            0.0,
+                                           Math.sin(rad),  0.0,   Math.cos(rad),  0.0,
+                                      	   0.0,            0.0,   0.0,            1.0] );
+	
+	gl.uniformMatrix4fv(u_rotateY_location, false, rotateYMatrix);
+
+	//ROTATION DATA FOR X AXIS
+	var u_rotateX_location = gl.getUniformLocation(prog, "u_RotX");
+	var thetaX = 25+angleX;
+	var rad = thetaX*Math.PI/180;
+    var rotateXMatrix = new Float32Array( [1.0,  0.0,            0.0,            0.0,
+                                      	   0.0,  Math.cos(rad),  Math.sin(rad),  0.0,
+                                     	   0.0, -Math.sin(rad),  Math.cos(rad),  0.0,
+                                      	   0.0,  0.0,            0.0,            1.0] );
+	gl.uniformMatrix4fv(u_rotateX_location, false, rotateXMatrix);
+	
+	//DRAWING BACKGROUND CUBE
+	gl.clearColor(1.0, 1.0, 1.0, 1.0);
+    gl.enable(gl.DEPTH_TEST);
+    gl.enable(gl.CULL_FACE);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+	gl.drawElements(gl.TRIANGLES, 3*12, gl.UNSIGNED_BYTE, 0);
+	
+	//PICKING NEW COLOR FOR DRAWING FOREGROUND CUBE
+	var black_or_color_location=gl.getUniformLocation(prog,"black_or_color");
+	var temp=new Float32Array([1.0,1.0,1.0]);
+	gl.uniform3fv(black_or_color_location,temp);
+		
+	var a_colors_location = gl.getAttribLocation(prog, "a_colors");
+    //REBINDING BUFFER
+    gl.bindBuffer(gl.ARRAY_BUFFER, a_coords_buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, coords, gl.STATIC_DRAW);
+    gl.vertexAttribPointer(a_colors_location, 3, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(a_colors_location);									
+	
+	
+	
+	//NEW SCALE FACTOR FOR FOREGROUND CUBE
+	u_scaleFactor_location = gl.getUniformLocation(prog, "u_scaleFactor");
+	var Sx = 1.0;
+	var Sy = 1.0;
+	var Sz = 1.0;
+	var scaleFactorMatrix = new Float32Array( [ Sx,   0.0,  0.0,  0.0,
+												0.0,  Sy,   0.0,  0.0,
+												0.0,  0.0,  Sz,   0.0,
+												0.0,  0.0,  0.0,  1.0] );
+	
+	//DRAWING FOREGROUND CUBE	
+	gl.uniformMatrix4fv(u_scaleFactor_location, false, scaleFactorMatrix);	
+    gl.enable(gl.DEPTH_TEST);
+    gl.enable(gl.CULL_FACE);
+	gl.drawElements(gl.TRIANGLES, 3*12, gl.UNSIGNED_BYTE, 0);
+	
+	}//DRAWCUBE FUNCTION ENDS
+	
+	
+	 
+	//EVENT LISTENER FOR 4 ARROW KEYS 
+	window.addEventListener('keydown',this.check,false); 
+	function check(e) {
+		var code = e.keyCode;
+		//LEFT ARROW ROTATES ALONG Y AXIS
+		if(code==37)
+		{
+			angleY=angleY+15;
+			drawCube();
+		}
+		//UP ARROW INCREASES BORDER
+		else if(code==38)
+		{
+			scaleFactor=scaleFactor+0.01;
+			drawCube();
+		}
+		//RIGHT ARROW ROTATES ALONG X AXIS
+		else if (code == 39){
+			angleX=angleX+15;
+			drawCube();
+		}
+		//DOWN ARROW DECREASES BORDER
+		else if(code==40)
+		{
+			scaleFactor=scaleFactor-0.01;
+			drawCube();
+		}
+		
+    
+	}
+
+
+</script>
+
+
+
+</html>

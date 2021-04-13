@@ -1,0 +1,132 @@
+
+<html>
+<title>Assignment 1: Part A</title>
+<canvas id="webglcanvas" width="600" height="600"></canvas>
+
+<script>
+
+    var canvas = document.getElementById("webglcanvas"); 
+    var  gl = canvas.getContext("webgl");
+    var angle = 0;
+	var clickCount=0;
+	
+	//VERTEX SHADER SOURCE
+    var vertexShaderSource =
+       `attribute vec3 a_coords;
+        void main() {
+            gl_Position = vec4(a_coords, 1.0);
+			gl_PointSize = 2.5;
+        }`;
+	
+	//FRAGMENT SHADER SOURCE
+	var fragmentShaderSource =
+
+       `precision mediump float;
+        uniform vec3 u_color;
+		uniform float u_shift_color;
+        void main() {
+			//ALTERNATING BETWEEN GREEN AND RED
+            gl_FragColor = vec4(u_color.x-u_shift_color,u_color.y+u_shift_color,u_color.z, 1.0);
+        }`;
+	
+	//VERTEX SHADER
+    var vsh = gl.createShader( gl.VERTEX_SHADER );
+    gl.shaderSource( vsh, vertexShaderSource );
+    gl.compileShader( vsh );
+
+	//FRAGMENT SHADER
+    var fsh = gl.createShader( gl.FRAGMENT_SHADER );
+    gl.shaderSource( fsh, fragmentShaderSource );
+    gl.compileShader( fsh );
+    
+    var prog = gl.createProgram(); 
+    
+	//ATTACHING SHADERS
+    gl.attachShader( prog, vsh ); 
+    gl.attachShader( prog, fsh );
+    gl.linkProgram( prog ); 
+    gl.useProgram(prog); 
+
+    var a_coords_location = gl.getAttribLocation(prog, "a_coords"); 
+	
+	//STARTING AT K=2, I.E. 4 PETALS
+	var coords_1 = [];	
+	var k=2;
+	var theta=0;
+	for (var n = 0; n < 2000; n++) {
+        //DIVIDING 360 DEGREES INTO 2000 UNITS FOR SMOOTHER PETALS
+        theta += (Math.PI * 2) / 2000;
+		
+		//ROSE EQUATIONS FOR CARTESIAN COORDINATES
+		var x=Math.cos(k*theta)*Math.cos(theta);
+		var y=Math.cos(k*theta)*Math.sin(theta);
+        
+		coords_1.push(x);
+		coords_1.push(y);
+		coords_1.push(0.0);
+    }
+	var coords = new Float32Array(coords_1);
+	
+    var a_coords_buffer = gl.createBuffer(); 
+
+	//BINDING DATA FOR INITIAL VALUES OF COORDINATES
+    gl.bindBuffer(gl.ARRAY_BUFFER, a_coords_buffer); 
+    gl.bufferData(gl.ARRAY_BUFFER, coords, gl.STATIC_DRAW); 
+    gl.vertexAttribPointer(a_coords_location, 3, gl.FLOAT, false, 0, 0); 
+    gl.enableVertexAttribArray(a_coords_location); 
+    
+	//SETTING INITIAL GREEN COLOR FOR VERTICES
+	var u_color_location = gl.getUniformLocation(prog, "u_color");
+	var color = new Float32Array( [0, 1, 0] );
+	gl.uniform3fv(u_color_location,  color);
+	
+	//FOR SHIFTING COLORS LATER
+	var u_shift_color_location = gl.getUniformLocation(prog, "u_shift_color");
+	var shift_color = 1;
+	gl.uniform1f(u_shift_color_location, shift_color);
+	
+	//DRAWING INITIAL COORDINATES
+    gl.clearColor(1.0, 1.0, 0.8, 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+	gl.drawArrays(gl.POINTS, 0, 2000); 
+	
+	
+	canvas.onmousedown = function ()
+	{  
+	//SHIFTING COLOR ON EACH CLICK BETWEEN GREEN AND RED
+    clickCount = clickCount + 1;
+	shift_color = shift_color * (-1);
+    gl.uniform1f(u_shift_color_location, shift_color);
+	
+	//RECALCULATING VALUES OF COORDINATES
+	coords_1 = [];
+	k=k+1;
+	theta=0;
+	for (var n = 0; n < 2000*k; n++) {
+        
+        theta += (Math.PI * 2) / (2000*k);
+		var x=Math.cos(k*theta)*Math.cos(theta);
+		var y=Math.cos(k*theta)*Math.sin(theta);
+        
+		coords_1.push(x);
+		coords_1.push(y);
+		coords_1.push(0.0);
+    }
+	var coords_2 = new Float32Array(coords_1);
+
+	//RE-BINDING NEW DATA TO EXISTING BUFFER
+    gl.bindBuffer(gl.ARRAY_BUFFER, a_coords_buffer); 
+    gl.bufferData(gl.ARRAY_BUFFER, coords_2, gl.STATIC_DRAW); 
+    
+	
+	//DRAWING NEW COORDINATES
+	gl.clearColor(1.0, 1.0, 0.8, 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+	gl.drawArrays(gl.POINTS, 0, (2000*k)); 
+	};
+
+</script>
+
+
+
+</html>

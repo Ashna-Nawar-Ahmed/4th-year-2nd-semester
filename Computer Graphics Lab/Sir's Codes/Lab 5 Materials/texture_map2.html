@@ -1,0 +1,200 @@
+<!-- saved from url=(0065)http://math.hws.edu/graphicsbook/source/webgl/simple-texture.html -->
+<!-- modified by Mohammad Imrul Jubair -->
+
+<html>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<title>LAB-5: Textures</title>
+<canvas id="webglcanvas" width="500" height="500"></canvas>
+
+<img id="doorimage" src="crate.jpg" width="0" height="0"></img>
+
+<script>
+
+var vertexShaderSource =
+
+       `attribute vec3 a_coords;
+	    attribute vec3 a_colors;
+		attribute vec2 a_texCoords;		
+		varying vec3 v_color;
+		varying vec2 v_texCoords;
+        
+		void main() {
+
+			gl_Position = vec4(a_coords, 1.0);
+			v_color = a_colors;
+			v_texCoords = a_texCoords;
+        }`;
+
+
+var fragmentShaderSource =
+
+       `precision mediump float;
+		varying vec3 v_color;
+		uniform sampler2D u_sampler_texture;
+		
+        varying vec2 v_texCoords;
+        
+        void main() {
+			vec4 color = texture2D( u_sampler_texture, v_texCoords );
+            gl_FragColor = color;
+			//gl_FragColor = vec4(v_color, 1.0);
+			//gl_FragColor = color/2.0 + vec4(v_color/3.0, 1.0);
+        }`;
+
+
+
+
+var gl;
+var a_coords_location;
+var a_coords_buffer;
+
+var a_texCoords_location;
+var a_texCoords_buffer;
+var textureObject;
+
+var a_colors_location;
+var a_colors_buffer;
+
+
+var coords;
+var colors;
+var texCoords;
+var indices;
+
+var bufferInd;
+
+var u_sampler_texture_location;
+
+function model(){
+	coords = new Float32Array( [-0.5, -0.5,  0,
+								 0.5, -0.5,  0,
+								 0.5,  0.5,  0,
+								-0.5,  0.5,  0] );
+
+    colors = new Float32Array( 	[1.0, 0.0, 0.0,
+								 1.0, 0.0, 0.0,
+								 1.0, 0.0, 0.0,
+								 1.0, 0.0, 0.0] );
+
+	texCoords = new Float32Array( [0.0, 0.0,
+                                   1.0, 0.0,
+                                   1.0, 1.0,
+                                   0.0, 1.0] );
+	
+	indices = new Uint8Array([0, 1, 2,      0, 2, 3]);
+
+}
+
+function draw() {
+    
+	gl.bindBuffer(gl.ARRAY_BUFFER, a_coords_buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, coords, gl.STATIC_DRAW);
+    gl.vertexAttribPointer(a_coords_location, 3, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(a_coords_location);
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, a_colors_buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, colors, gl.STATIC_DRAW);
+    gl.vertexAttribPointer(a_colors_location, 3, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(a_colors_location);
+	
+	gl.bindBuffer(gl.ARRAY_BUFFER, a_texCoords_buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, texCoords, gl.STATIC_DRAW);
+    gl.vertexAttribPointer(a_texCoords_location, 2, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(a_texCoords_location);
+
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, bufferInd);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
+
+
+	gl.activeTexture(gl.TEXTURE0);
+	
+	gl.bindTexture(gl.TEXTURE_2D, textureObject);
+	
+    gl.uniform1i(u_sampler_texture_location, 0);
+
+	gl.clearColor(0.5,0.7,0.9,1.0);
+    gl.enable(gl.DEPTH_TEST);
+    gl.enable(gl.CULL_FACE);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    gl.drawElements(gl.TRIANGLES, 3*2, gl.UNSIGNED_BYTE, 0);
+}
+
+
+function createProgram(gl, vertexShaderSource, fragmentShaderSource) {
+
+  var vsh = gl.createShader( gl.VERTEX_SHADER );
+  gl.shaderSource( vsh, vertexShaderSource );
+  gl.compileShader( vsh );
+
+  var fsh = gl.createShader( gl.FRAGMENT_SHADER );
+  gl.shaderSource( fsh, fragmentShaderSource );
+  gl.compileShader( fsh );
+
+  var prog = gl.createProgram();
+  gl.attachShader( prog, vsh );
+  gl.attachShader( prog, fsh );
+  gl.linkProgram( prog );
+
+  return prog;
+}
+
+function loadTexture(textureObject, imageID) {
+
+	gl.bindTexture(gl.TEXTURE_2D, textureObject);
+	
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+	
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+	
+	gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
+	
+	gl.texImage2D(gl.TEXTURE_2D,
+				  0,
+				  gl.RGBA,
+				  gl.RGBA,
+				  gl.UNSIGNED_BYTE,
+				  document.getElementById(imageID));
+}
+
+function initGL() {
+    var prog = createProgram( gl, vertexShaderSource, fragmentShaderSource );
+    gl.useProgram(prog);
+
+    a_coords_location = gl.getAttribLocation(prog, "a_coords");
+    a_coords_buffer = gl.createBuffer();
+
+    a_colors_location = gl.getAttribLocation(prog, "a_colors");
+    a_colors_buffer = gl.createBuffer();
+
+	a_texCoords_location = gl.getAttribLocation(prog, "a_texCoords");
+    a_texCoords_buffer = gl.createBuffer();
+	
+	u_sampler_texture_location = gl.getUniformLocation(prog, "u_sampler_texture");
+    
+	textureObject = gl.createTexture();
+	
+    loadTexture(textureObject, "doorimage");
+   
+    bufferInd = gl.createBuffer();
+
+}
+
+function init() {
+    var canvas = document.getElementById("webglcanvas");
+    gl = canvas.getContext("webgl");
+	
+	model();
+    
+	initGL();
+	draw();
+	
+}
+
+
+</script>
+<body onload="init()"> </body>
+
+
+</html>

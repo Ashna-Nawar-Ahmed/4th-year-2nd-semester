@@ -1,0 +1,1250 @@
+<html>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<title>Assignment 4: Book</title>
+<canvas id="webglcanvas" width="500" height="500"></canvas>
+<img id="bookcover" src="cover texture.jpg" width="0" height="0"></img>
+<img id="bookpages" src="paper texture.jpg" width="0" height="0"></img>
+<img id="bookbinding" src="binding texture.jpg" width="0" height="0"></img>
+<script src='./cuon-matrix.js'></script>
+
+<script>
+
+
+var vertexShaderSourceLowerCover =
+
+       `attribute vec3 a_coords;
+		attribute vec3 a_normals;
+		attribute vec3 a_colors;
+		attribute vec2 a_texCoords;
+		
+	 	uniform mat4 u_ModelViewProjection_matrix;
+		uniform mat4 u_ModelView_matrix;
+		uniform mat4 u_Normal_matrix;
+		uniform vec3 u_LightPosition;
+		varying vec3 v_coords;
+		varying vec3 v_normal;
+		
+	    varying vec3 v_color;
+		varying vec2 v_texCoords;
+		
+		uniform mat4 u_LightModelView_matrix;
+		
+		varying vec3 light;
+        
+		void main() {
+			
+			gl_Position = u_ModelViewProjection_matrix * vec4(a_coords,1.0);			
+			vec4 position = u_ModelView_matrix * vec4(a_coords,1.0);		
+			v_coords = position.xyz; 		
+			v_normal = normalize(vec3(u_Normal_matrix * vec4(a_normals, 1.0)));
+
+			v_texCoords = a_texCoords;
+			light=(u_LightModelView_matrix*vec4(u_LightPosition,1.0)).xyz;
+        }`;
+
+
+var fragmentShaderSourceLowerCover =
+
+       `precision mediump float;
+	    uniform vec3 u_LightColor;
+		uniform vec3 u_AmbientLight;
+		uniform vec3 u_Color;
+		
+		varying vec3 v_coords;
+		varying vec3 v_normal;
+		
+		uniform sampler2D u_sampler_texture;		
+        varying vec2 v_texCoords;
+		
+		varying vec3 light;
+		
+        void main() {
+
+			vec3 N, L, R, E;  
+			N = normalize(v_normal);
+            L = normalize(light - v_coords);
+			R = -reflect(L,N);
+			E = normalize(-v_coords);  
+
+			vec3 Cr = u_Color;
+			vec3 Ca = (u_AmbientLight);
+			vec3 Cl = (u_LightColor);
+			float Cp = 1.8;
+			float p = 2.0;
+			
+			vec3 C = Cr*(Ca + Cl*max(0.0, dot(L,N))) + Cl*Cp*pow(max(0.0, dot(R,E)), p);
+			vec4 text=  texture2D( u_sampler_texture, v_texCoords);
+			
+			gl_FragColor = vec4(C*text.rgb,text.a);
+		
+        }`;
+		
+var vertexShaderSourceUpperCover =
+
+       `attribute vec3 a_coords;
+		attribute vec3 a_normals;
+		attribute vec3 a_colors;
+		attribute vec2 a_texCoords;
+		
+	 	uniform mat4 u_ModelViewProjection_matrix;
+		uniform mat4 u_ModelView_matrix;
+		uniform mat4 u_Normal_matrix;
+		uniform vec3 u_LightPosition;
+		varying vec3 v_coords;
+		varying vec3 v_normal;
+		
+	    varying vec3 v_color;
+		varying vec2 v_texCoords;
+		
+		uniform mat4 u_LightModelView_matrix;
+		
+		varying vec3 light;
+        
+		void main() {
+			
+			gl_Position = u_ModelViewProjection_matrix * vec4(a_coords,1.0);			
+			vec4 position = u_ModelView_matrix * vec4(a_coords,1.0);		
+			v_coords = position.xyz; 		
+			v_normal = normalize(vec3(u_Normal_matrix * vec4(a_normals, 1.0)));
+			
+
+			v_texCoords = a_texCoords;
+			light=(u_LightModelView_matrix*vec4(u_LightPosition,1.0)).xyz;
+        }`;
+
+
+var fragmentShaderSourceUpperCover =
+
+       `precision mediump float;
+	    uniform vec3 u_LightColor;
+		uniform vec3 u_AmbientLight;
+		uniform vec3 u_Color;
+		
+		varying vec3 v_coords;
+		varying vec3 v_normal;
+		
+		uniform sampler2D u_sampler_texture;		
+        varying vec2 v_texCoords;
+		
+		varying vec3 light;
+		
+        void main() {
+
+			vec3 N, L, R, E;  
+			N = normalize(v_normal);
+            L = normalize(light - v_coords);
+			R = -reflect(L,N);
+			E = normalize(-v_coords);  
+
+			vec3 Cr = u_Color;
+			vec3 Ca = (u_AmbientLight);
+			vec3 Cl = (u_LightColor);
+			float Cp = 1.8;
+			float p = 2.0;
+			
+			vec3 C = Cr*(Ca + Cl*max(0.0, dot(L,N))) + Cl*Cp*pow(max(0.0, dot(R,E)), p);
+			vec4 text=  texture2D( u_sampler_texture, v_texCoords);
+			
+			gl_FragColor = vec4(C*text.rgb,text.a);
+		
+        }`;
+
+var vertexShaderSourcePages =
+
+       `attribute vec3 a_coords;
+		attribute vec3 a_normals;
+		attribute vec3 a_colors;
+		attribute vec2 a_texCoords;
+		
+	 	uniform mat4 u_ModelViewProjection_matrix;
+		uniform mat4 u_ModelView_matrix;
+		uniform mat4 u_Normal_matrix;
+		uniform vec3 u_LightPosition;
+		varying vec3 v_coords;
+		varying vec3 v_normal;
+		
+	    varying vec3 v_color;
+		varying vec2 v_texCoords;
+		
+		uniform mat4 u_LightModelView_matrix;
+		
+		varying vec3 light;
+        
+		void main() {
+			
+			gl_Position = u_ModelViewProjection_matrix * vec4(a_coords,1.0);			
+			vec4 position = u_ModelView_matrix * vec4(a_coords,1.0);		
+			v_coords = position.xyz; 		
+			v_normal = normalize(vec3(u_Normal_matrix * vec4(a_normals, 1.0)));
+			
+
+			v_texCoords = a_texCoords;
+			light=(u_LightModelView_matrix*vec4(u_LightPosition,1.0)).xyz;
+        }`;
+
+var fragmentShaderSourcePages =
+
+       `precision mediump float;
+	    uniform vec3 u_LightColor;
+		uniform vec3 u_AmbientLight;
+		uniform vec3 u_Color;
+		
+		varying vec3 v_coords;
+		varying vec3 v_normal;
+		
+		uniform sampler2D u_sampler_texture;		
+        varying vec2 v_texCoords;
+		
+		varying vec3 light;
+		
+        void main() {
+
+			vec3 N, L, R, E;  
+			N = normalize(v_normal);
+            L = normalize(light - v_coords);
+			R = -reflect(L,N);
+			E = normalize(-v_coords);  
+
+			vec3 Cr = u_Color;
+			vec3 Ca = (u_AmbientLight);
+			vec3 Cl = (u_LightColor);
+			float Cp = 1.8;
+			float p = 2.0;
+			
+			vec3 C = Cr*(Ca + Cl*max(0.0, dot(L,N))) + Cl*Cp*pow(max(0.0, dot(R,E)), p);
+			vec4 text=  texture2D( u_sampler_texture, v_texCoords);
+			
+			gl_FragColor = vec4(C*text.rgb,text.a);
+		
+        }`;
+var vertexShaderSourceBinding =
+
+       `attribute vec3 a_coords;
+		attribute vec3 a_normals;
+		attribute vec3 a_colors;
+		attribute vec2 a_texCoords;
+		
+	 	uniform mat4 u_ModelViewProjection_matrix;
+		uniform mat4 u_ModelView_matrix;
+		uniform mat4 u_Normal_matrix;
+		uniform vec3 u_LightPosition;
+		varying vec3 v_coords;
+		varying vec3 v_normal;
+		
+	    varying vec3 v_color;
+		varying vec2 v_texCoords;
+		
+		uniform mat4 u_LightModelView_matrix;
+		
+		varying vec3 light;
+        
+		void main() {
+			
+			gl_Position = u_ModelViewProjection_matrix * vec4(a_coords,1.0);			
+			vec4 position = u_ModelView_matrix * vec4(a_coords,1.0);		
+			v_coords = position.xyz; 		
+			v_normal = normalize(vec3(u_Normal_matrix * vec4(a_normals, 1.0)));
+			
+
+			v_texCoords = a_texCoords;
+			light=(u_LightModelView_matrix*vec4(u_LightPosition,1.0)).xyz;
+        }`;
+
+
+var fragmentShaderSourceBinding =
+
+      `precision mediump float;
+	    uniform vec3 u_LightColor;
+		uniform vec3 u_AmbientLight;
+		uniform vec3 u_Color;
+		
+		varying vec3 v_coords;
+		varying vec3 v_normal;
+		
+		uniform sampler2D u_sampler_texture;		
+        varying vec2 v_texCoords;
+		
+		varying vec3 light;
+		
+        void main() {
+
+			vec3 N, L, R, E;  
+			N = normalize(v_normal);
+            L = normalize(light - v_coords);
+			R = -reflect(L,N);
+			E = normalize(-v_coords);  
+
+			vec3 Cr = u_Color;
+			vec3 Ca = (u_AmbientLight);
+			vec3 Cl = (u_LightColor);
+			float Cp = 1.8;
+			float p = 2.0;
+			
+			vec3 C = Cr*(Ca + Cl*max(0.0, dot(L,N))) + Cl*Cp*pow(max(0.0, dot(R,E)), p);
+			vec4 text=  texture2D( u_sampler_texture, v_texCoords);
+			
+			gl_FragColor = vec4(C*text.rgb,text.a);
+		
+        }`;
+
+var gl;
+var a_coords_location;
+var a_coords_buffer;
+
+var a_colors_location;
+var a_colors_buffer;
+
+var a_normals_location;
+var a_normals_buffer;
+
+var a_texCoords_location;
+var a_texCoords_buffer;
+var textureObject;
+
+var coords;
+var colors;
+var normals;
+var texCoords;
+var indices;
+
+var changeXe=0;
+var changeYe=0;
+var keyPressed=0;
+
+var clickCount=0;
+
+
+var bufferInd;
+
+var u_matrix_mvp_location;
+var u_matrix_model_location;
+var u_matrix_normal_location;
+var u_color_location;
+var u_lightColor_location, u_LightPosition_location;
+var u_AmbientLight_location;
+
+
+var light_thetaX = 90;
+var light_thetaY = 90;
+
+
+var Xe=0.0;
+var Ye=0.0;
+
+var thetaX = 0;
+var thetaY = 60;
+var thetaZ = 0;
+
+function model(){
+
+		coords = new Float32Array([
+					// Front face
+					  -0.5, -0.5,  0.5,
+					   0.5, -0.5,  0.5,
+					   0.5,  0.5,  0.5,
+					  -0.5,  0.5,  0.5,
+
+					  // Back face
+					  -0.5, -0.5, -0.5,
+					  -0.5,  0.5, -0.5,
+					   0.5,  0.5, -0.5,
+					   0.5, -0.5, -0.5,
+
+					  // Top face
+					  -0.5,  0.5, -0.5,
+					  -0.5,  0.5,  0.5,
+					   0.5,  0.5,  0.5,
+					   0.5,  0.5, -0.5,
+
+					  // Bottom face
+					  -0.5, -0.5, -0.5,
+					   0.5, -0.5, -0.5,
+					   0.5, -0.5,  0.5,
+					  -0.5, -0.5,  0.5,
+
+					  // Right face
+					   0.5, -0.5, -0.5,
+					   0.5,  0.5, -0.5,
+					   0.5,  0.5,  0.5,
+					   0.5, -0.5,  0.5,
+
+					  // Left face
+					  -0.5, -0.5, -0.5,
+					  -0.5, -0.5,  0.5,
+					  -0.5,  0.5,  0.5,
+					  -0.5,  0.5, -0.5
+		  ]);
+		
+		colors = new Float32Array([
+									1.0, 0.0, 0.0,
+									1.0, 0.0, 0.0,
+									1.0, 0.0, 0.0,
+									1.0, 0.0, 0.0,
+
+									0.0, 1.0, 0.0,
+									0.0, 1.0, 0.0,
+									0.0, 1.0, 0.0,
+									0.0, 1.0, 0.0,
+
+									0.0, 0.0, 1.0,
+									0.0, 0.0, 1.0,
+									0.0, 0.0, 1.0,
+									0.0, 0.0, 1.0,
+
+									1.0, 1.0, 0.0,
+									1.0, 1.0, 0.0,
+									1.0, 1.0, 0.0,
+									1.0, 1.0, 0.0,
+
+									0.0, 1.0, 1.0,
+									0.0, 1.0, 1.0,
+									0.0, 1.0, 1.0,
+									0.0, 1.0, 1.0,
+
+									1.0, 0.0, 1.0,
+									1.0, 0.0, 1.0,
+									1.0, 0.0, 1.0,
+									1.0, 0.0, 1.0
+		 ]);
+		
+		normals = new Float32Array([
+			0.0, 0.0, 1.0,   0.0, 0.0, 1.0,   0.0, 0.0, 1.0,   0.0, 0.0, 1.0,  // v0-v1-v2-v3 front
+			1.0, 0.0, 0.0,   1.0, 0.0, 0.0,   1.0, 0.0, 0.0,   1.0, 0.0, 0.0,  // v0-v3-v4-v5 right
+			0.0, 1.0, 0.0,   0.0, 1.0, 0.0,   0.0, 1.0, 0.0,   0.0, 1.0, 0.0,  // v0-v5-v6-v1 up
+		    -1.0, 0.0, 0.0,   -1.0, 0.0, 0.0,  -1.0, 0.0, 0.0,  -1.0, 0.0, 0.0,  // v1-v6-v7-v2 left
+			0.0,-1.0, 0.0,   0.0,-1.0, 0.0,   0.0,-1.0, 0.0,   0.0,-1.0, 0.0,  // v7-v4-v3-v2 down
+			0.0, 0.0,-1.0,   0.0, 0.0,-1.0,   0.0, 0.0,-1.0,   0.0, 0.0,-1.0   // v4-v7-v6-v5 back
+		  ]);
+
+		texCoords = new Float32Array( [
+                                        // Front face
+                                        0.0, 0.0,
+                                        1.0, 0.0,
+                                        1.0, 1.0,
+                                        0.0, 1.0,
+
+                                        // Back face
+                                        1.0, 0.0,
+                                        1.0, 1.0,
+                                        0.0, 1.0,
+                                        0.0, 0.0,
+
+                                        // Top face
+                                        0.0, 1.0,
+                                        0.0, 0.0,
+                                        1.0, 0.0,
+                                        1.0, 1.0,
+
+                                        // Bottom face
+                                        1.0, 1.0,
+                                        0.0, 1.0,
+                                        0.0, 0.0,
+                                        1.0, 0.0,
+
+                                        // Right face
+                                        1.0, 0.0,
+                                        1.0, 1.0,
+                                        0.0, 1.0,
+                                        0.0, 0.0,
+
+                                        // Left face
+                                        0.0, 0.0,
+                                        1.0, 0.0,
+                                        1.0, 1.0,
+                                        0.0, 1.0,
+                                      ] );
+									  
+		  indices = new Uint8Array([
+			 0, 1, 2,   0, 2, 3,    // front
+			 4, 5, 6,   4, 6, 7,    // right
+			 8, 9,10,   8,10,11,    // up
+			12,13,14,  12,14,15,    // left
+			16,17,18,  16,18,19,    // down
+			20,21,22,  20,22,23     // back
+		 ]);
+}
+
+function drawLowerCover() {
+
+	var rotateMatX = new Matrix4();
+	rotateMatX.rotate(thetaX, 1, 0, 0);
+	
+	var rotateMatY = new Matrix4();
+	rotateMatY.rotate(thetaY, 0, 1, 0);
+
+	
+
+	var sx=2.65,sy=0.05,sz=1.55;
+	var scaleMat = new Matrix4();
+	
+	scaleMat.scale(sx, sy, sz);
+						  
+	var tx = -0.45, ty = -0.45, tz = -2.5;
+	var transMat = new Matrix4();
+	transMat.translate(tx, ty, tz);
+	
+	var xe = 1.0, ye = 1.0, ze = 0.0;
+	var camMat = new Matrix4();
+	camMat.lookAt(xe+changeXe, ye+changeYe, ze, 0, 0, -2.0, 0, 1, 0);
+
+	var aspect = 1.0, fov = 75.0, far = 10.0, near = 1.0;
+	var persMat = new Matrix4();
+	persMat.perspective(fov, aspect, near, far);
+		
+	var modelViewMat = new Matrix4();
+	modelViewMat.multiply(camMat);
+	modelViewMat.multiply(transMat);
+	modelViewMat.multiply(scaleMat);
+	modelViewMat.multiply(rotateMatY);
+	modelViewMat.multiply(rotateMatX);
+	
+	
+	var rotateMatX = new Matrix4();
+	rotateMatX.rotate(light_thetaX, 1, 0, 0);
+	
+	
+	var rotateMatY = new Matrix4();
+	rotateMatY.rotate(light_thetaY, 0, 1, 0);
+	
+	var lightmodelViewMat = new Matrix4();
+	lightmodelViewMat.multiply(rotateMatY);
+	lightmodelViewMat.multiply(rotateMatX);
+	
+	
+	var mvpMat = new Matrix4();
+	mvpMat.multiply(persMat);
+	mvpMat.multiply(modelViewMat);
+	
+
+	var normalMat = new Matrix4();
+	normalMat.setInverseOf(modelViewMat);
+	normalMat.transpose(); 
+
+	
+	gl.bindBuffer(gl.ARRAY_BUFFER, a_coords_buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, coords, gl.STATIC_DRAW);
+    gl.vertexAttribPointer(a_coords_location, 3, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(a_coords_location);
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, a_normals_buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, normals, gl.STATIC_DRAW);
+    gl.vertexAttribPointer(a_normals_location, 3, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(a_normals_location);
+	
+	gl.bindBuffer(gl.ARRAY_BUFFER, a_texCoords_buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, texCoords, gl.STATIC_DRAW);
+    gl.vertexAttribPointer(a_texCoords_location, 2, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(a_texCoords_location);
+
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, bufferInd);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
+
+    gl.uniform3fv(u_color_location, colors);
+
+	gl.uniform3f(u_lightColor_location, 0.8, 0.8, 0.8);
+ 
+	gl.uniform3f(u_LightPosition_location, -2.8,-2.8,-2.8);
+
+	gl.uniform3f(u_AmbientLight_location, 0.9, 0.9, 0.9);
+	
+  
+    gl.uniformMatrix4fv(u_matrix_mvp_location, false, mvpMat.elements);
+	gl.uniformMatrix4fv(u_matrix_model_location, false, modelViewMat.elements);
+	gl.uniformMatrix4fv(u_light_matrix_model_location, false, lightmodelViewMat.elements);
+	gl.uniformMatrix4fv(u_matrix_normal_location, false, normalMat.elements);
+	
+	gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, textureObject);
+    gl.uniform1i(u_sampler_texture_location, 0);
+
+	gl.clearColor(1.0,1.0,1.0,1.0);
+    gl.enable(gl.DEPTH_TEST);
+    gl.enable(gl.CULL_FACE);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_BYTE, 0);
+	if(keyPressed==0){
+		light_thetaY = light_thetaY + 0.5;
+		requestAnimationFrame(drawLowerCover);
+	}
+	
+}
+
+var change=0;
+////GOOD VERSION
+function drawUpperCoverClosed() {
+
+	var rotateMatX = new Matrix4();
+	rotateMatX.rotate(thetaX, 1, 0, 0);
+	
+	var rotateMatY = new Matrix4();
+	rotateMatY.rotate(thetaY, 0, 1, 0);
+	
+	var rotateMatZ = new Matrix4();
+	rotateMatZ.rotate(thetaZ, 0, 1, 0);
+	
+	var sx=2.65,sy=0.05,sz=1.55;
+	var scaleMat = new Matrix4();
+
+	scaleMat.scale(sx, sy, sz);
+						  
+	var tx = -0.45, ty = 0.0, tz = -2.5;
+	var transMat = new Matrix4();
+	transMat.translate(tx, ty, tz+change);
+	
+	var xe = 1.0, ye = 1.0, ze = 0.0;
+	var camMat = new Matrix4();
+	camMat.lookAt(xe+changeXe, ye+changeYe, ze, 0, 0, -2.0, 0, 1, 0);
+
+	var aspect = 1.0, fov = 75.0, far = 10.0, near = 1.0;
+	var persMat = new Matrix4();
+	persMat.perspective(fov, aspect, near, far);
+		
+	var modelViewMat = new Matrix4();
+	modelViewMat.multiply(camMat);
+	modelViewMat.multiply(transMat);
+	modelViewMat.multiply(scaleMat);
+	modelViewMat.multiply(rotateMatY);
+	modelViewMat.multiply(rotateMatX);
+	
+	
+	var rotateMatX = new Matrix4();
+	rotateMatX.rotate(light_thetaX, 1, 0, 0);
+	
+	
+	var rotateMatY = new Matrix4();
+	rotateMatY.rotate(light_thetaY, 0, 1, 0);
+	
+	var lightmodelViewMat = new Matrix4();
+	lightmodelViewMat.multiply(rotateMatY);
+	lightmodelViewMat.multiply(rotateMatX);
+	
+	
+	var mvpMat = new Matrix4();
+	mvpMat.multiply(persMat);
+	mvpMat.multiply(modelViewMat);
+	
+
+	var normalMat = new Matrix4();
+	normalMat.setInverseOf(modelViewMat);
+	normalMat.transpose(); 
+
+	
+	gl.bindBuffer(gl.ARRAY_BUFFER, a_coords_buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, coords, gl.STATIC_DRAW);
+    gl.vertexAttribPointer(a_coords_location, 3, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(a_coords_location);
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, a_normals_buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, normals, gl.STATIC_DRAW);
+    gl.vertexAttribPointer(a_normals_location, 3, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(a_normals_location);
+	
+	gl.bindBuffer(gl.ARRAY_BUFFER, a_texCoords_buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, texCoords, gl.STATIC_DRAW);
+    gl.vertexAttribPointer(a_texCoords_location, 2, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(a_texCoords_location);
+
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, bufferInd);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
+
+    gl.uniform3fv(u_color_location, colors);
+
+	gl.uniform3f(u_lightColor_location, 0.8, 0.8, 0.8);
+ 
+	gl.uniform3f(u_LightPosition_location, -2.8,-2.8,-2.8);
+
+	gl.uniform3f(u_AmbientLight_location, 0.9, 0.9, 0.9);
+	
+  
+    gl.uniformMatrix4fv(u_matrix_mvp_location, false, mvpMat.elements);
+	gl.uniformMatrix4fv(u_matrix_model_location, false, modelViewMat.elements);
+	gl.uniformMatrix4fv(u_light_matrix_model_location, false, lightmodelViewMat.elements);
+	gl.uniformMatrix4fv(u_matrix_normal_location, false, normalMat.elements);
+	
+	gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, textureObject);
+    gl.uniform1i(u_sampler_texture_location, 0);
+
+	gl.clear(gl.DEPTH_BUFFER_BIT);
+
+    gl.drawElements(gl.TRIANGLES, 3*12, gl.UNSIGNED_BYTE, 0);
+	if(keyPressed==0){
+		light_thetaY = light_thetaY + 0.5;
+		//console.log('val y: '+light_thetaY);
+		requestAnimationFrame(drawUpperCoverClosed);
+	}
+	
+}
+
+function drawUpperCoverOpen() {
+
+	var rotateMatX = new Matrix4();
+	rotateMatX.rotate(thetaX, 1, 0, 0);
+	
+	var rotateMatY = new Matrix4();
+	rotateMatY.rotate(thetaY+85, 0, 1, 0);
+	
+	
+	var sx=2.65,sy=0.05,sz=1.55;
+	var scaleMat = new Matrix4();
+
+	scaleMat.scale(sx, sy, sz);
+						  
+	var tx = -1.4, ty = 0.0, tz = -1.3;
+	var transMat = new Matrix4();
+	transMat.translate(tx, ty, tz);
+	
+	var xe = 1.0, ye = 1.0, ze = 0.0;
+	var camMat = new Matrix4();
+	camMat.lookAt(xe+changeXe, ye+changeYe, ze, 0, 0, -2.0, 0, 1, 0);
+
+	var aspect = 1.0, fov = 75.0, far = 10.0, near = 1.0;
+	var persMat = new Matrix4();
+	persMat.perspective(fov, aspect, near, far);
+		
+	var modelViewMat = new Matrix4();
+	modelViewMat.multiply(camMat);
+	modelViewMat.multiply(transMat);
+	modelViewMat.multiply(scaleMat);
+	modelViewMat.multiply(rotateMatY);
+	modelViewMat.multiply(rotateMatX);
+	
+	
+	var rotateMatX = new Matrix4();
+	rotateMatX.rotate(light_thetaX, 1, 0, 0);
+	
+	
+	var rotateMatY = new Matrix4();
+	rotateMatY.rotate(light_thetaY, 0, 1, 0);
+	
+	var lightmodelViewMat = new Matrix4();
+	lightmodelViewMat.multiply(rotateMatY);
+	lightmodelViewMat.multiply(rotateMatX);
+	
+	
+	var mvpMat = new Matrix4();
+	mvpMat.multiply(persMat);
+	mvpMat.multiply(modelViewMat);
+	
+
+	var normalMat = new Matrix4();
+	normalMat.setInverseOf(modelViewMat);
+	normalMat.transpose(); 
+
+	
+	gl.bindBuffer(gl.ARRAY_BUFFER, a_coords_buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, coords, gl.STATIC_DRAW);
+    gl.vertexAttribPointer(a_coords_location, 3, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(a_coords_location);
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, a_normals_buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, normals, gl.STATIC_DRAW);
+    gl.vertexAttribPointer(a_normals_location, 3, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(a_normals_location);
+	
+	gl.bindBuffer(gl.ARRAY_BUFFER, a_texCoords_buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, texCoords, gl.STATIC_DRAW);
+    gl.vertexAttribPointer(a_texCoords_location, 2, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(a_texCoords_location);
+
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, bufferInd);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
+
+    gl.uniform3fv(u_color_location, colors);
+
+	gl.uniform3f(u_lightColor_location, 0.8, 0.8, 0.8);
+ 
+	gl.uniform3f(u_LightPosition_location, -2.8,-2.8,-2.8);
+
+	gl.uniform3f(u_AmbientLight_location, 0.9, 0.9, 0.9);
+	
+  
+    gl.uniformMatrix4fv(u_matrix_mvp_location, false, mvpMat.elements);
+	gl.uniformMatrix4fv(u_matrix_model_location, false, modelViewMat.elements);
+	gl.uniformMatrix4fv(u_light_matrix_model_location, false, lightmodelViewMat.elements);
+	gl.uniformMatrix4fv(u_matrix_normal_location, false, normalMat.elements);
+	
+	gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, textureObject);
+    gl.uniform1i(u_sampler_texture_location, 0);
+
+	gl.clear(gl.DEPTH_BUFFER_BIT);
+
+    gl.drawElements(gl.TRIANGLES, 3*12, gl.UNSIGNED_BYTE, 0);
+	if(keyPressed==0){
+		light_thetaY = light_thetaY + 0.5;
+		requestAnimationFrame(drawUpperCoverOpen);
+	}
+	
+}
+
+function drawPages() {
+
+	var rotateMatX = new Matrix4();
+	rotateMatX.rotate(thetaX, 1, 0, 0);
+	
+	var rotateMatY = new Matrix4();
+	rotateMatY.rotate(thetaY, 0, 1, 0);
+	
+	
+	var sx=1.5,sy=0.3,sz=1.0;
+	var scaleMat = new Matrix4();
+	scaleMat.scale(sx, sy, sz);
+						  
+	var tx = 0.0, ty = 0.0, tz = -2.0;
+	var transMat = new Matrix4();
+	transMat.translate(tx, ty, tz);
+	
+	var xe = 1.0, ye = 1.0, ze = 0.0;
+	var camMat = new Matrix4();
+	camMat.lookAt(xe+changeXe, ye+changeYe, ze, 0, 0, -2.0, 0, 1, 0);
+
+	var aspect = 1.0, fov = 75.0, far = 10.0, near = 1.0;
+	var persMat = new Matrix4();
+	persMat.perspective(fov, aspect, near, far);
+		
+	var modelViewMat = new Matrix4();
+	modelViewMat.multiply(camMat);
+	modelViewMat.multiply(transMat);
+	modelViewMat.multiply(scaleMat);
+	modelViewMat.multiply(rotateMatY);
+	modelViewMat.multiply(rotateMatX);
+	
+	
+	var rotateMatX = new Matrix4();
+	rotateMatX.rotate(light_thetaX, 1, 0, 0);
+	
+	
+	var rotateMatY = new Matrix4();
+	rotateMatY.rotate(light_thetaY, 0, 1, 0);
+	
+	var lightmodelViewMat = new Matrix4();
+	lightmodelViewMat.multiply(rotateMatY);
+	lightmodelViewMat.multiply(rotateMatX);
+	
+	
+	var mvpMat = new Matrix4();
+	mvpMat.multiply(persMat);
+	mvpMat.multiply(modelViewMat);
+	
+
+	var normalMat = new Matrix4();
+	normalMat.setInverseOf(modelViewMat);
+	normalMat.transpose(); 
+
+	
+	gl.bindBuffer(gl.ARRAY_BUFFER, a_coords_buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, coords, gl.STATIC_DRAW);
+    gl.vertexAttribPointer(a_coords_location, 3, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(a_coords_location);
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, a_normals_buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, normals, gl.STATIC_DRAW);
+    gl.vertexAttribPointer(a_normals_location, 3, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(a_normals_location);
+	
+	gl.bindBuffer(gl.ARRAY_BUFFER, a_texCoords_buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, texCoords, gl.STATIC_DRAW);
+    gl.vertexAttribPointer(a_texCoords_location, 2, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(a_texCoords_location);
+
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, bufferInd);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
+
+    gl.uniform3fv(u_color_location, colors);
+
+	gl.uniform3f(u_lightColor_location, 0.8, 0.8, 0.8);
+ 
+	gl.uniform3f(u_LightPosition_location, -2.8,-2.8,-2.8);
+
+	gl.uniform3f(u_AmbientLight_location, 0.9, 0.9, 0.9);
+	
+  
+    gl.uniformMatrix4fv(u_matrix_mvp_location, false, mvpMat.elements);
+	gl.uniformMatrix4fv(u_matrix_model_location, false, modelViewMat.elements);
+	gl.uniformMatrix4fv(u_light_matrix_model_location, false, lightmodelViewMat.elements);
+	gl.uniformMatrix4fv(u_matrix_normal_location, false, normalMat.elements);
+	
+	gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, textureObject);
+    gl.uniform1i(u_sampler_texture_location, 0);
+
+	
+    gl.clear(gl.DEPTH_BUFFER_BIT);
+
+    gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_BYTE, 0);
+	if(keyPressed==0){
+		light_thetaY = light_thetaY + 0.5;
+		requestAnimationFrame(drawPages);
+	}
+	
+}
+
+function drawBinding() {
+	var rotateMatX = new Matrix4();
+	rotateMatX.rotate(thetaX, 1, 0, 0);
+	
+	var rotateMatY = new Matrix4();
+	rotateMatY.rotate(thetaY, 0, 1, 0);
+	
+	var sx=4.4,sy=1.1,sz=0.01;
+	var scaleMat = new Matrix4();
+	scaleMat.scale(sx, sy, sz);
+						  
+	var tx = -4.4, ty = -1.43, tz = -2.45;
+	var transMat = new Matrix4();
+	transMat.translate(tx, ty, tz);
+	
+	var xe = 2.25, ye = 1.0, ze = -0.1;
+	var camMat = new Matrix4();
+	camMat.lookAt(xe+changeXe, ye+changeYe, ze, 0, 0, -2.0, 0, 1, 0);
+
+	var aspect = 1.0, fov = 75.0, far = 10.0, near = 1.0;
+	var persMat = new Matrix4();
+	persMat.perspective(fov, aspect, near, far);
+		
+	var modelViewMat = new Matrix4();
+	modelViewMat.multiply(camMat);
+	modelViewMat.multiply(transMat);
+	modelViewMat.multiply(scaleMat);
+	modelViewMat.multiply(rotateMatY);
+	modelViewMat.multiply(rotateMatX);
+	
+	
+	var rotateMatX = new Matrix4();
+	rotateMatX.rotate(light_thetaX, 1, 0, 0);
+	
+	
+	var rotateMatY = new Matrix4();
+	rotateMatY.rotate(light_thetaY, 0, 1, 0);
+	
+	var lightmodelViewMat = new Matrix4();
+	lightmodelViewMat.multiply(rotateMatY);
+	lightmodelViewMat.multiply(rotateMatX);
+	
+	
+	var mvpMat = new Matrix4();
+	mvpMat.multiply(persMat);
+	mvpMat.multiply(modelViewMat);
+	
+
+	var normalMat = new Matrix4();
+	normalMat.setInverseOf(modelViewMat);
+	normalMat.transpose(); 
+
+	
+	gl.bindBuffer(gl.ARRAY_BUFFER, a_coords_buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, coords, gl.STATIC_DRAW);
+    gl.vertexAttribPointer(a_coords_location, 3, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(a_coords_location);
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, a_normals_buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, normals, gl.STATIC_DRAW);
+    gl.vertexAttribPointer(a_normals_location, 3, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(a_normals_location);
+	
+	gl.bindBuffer(gl.ARRAY_BUFFER, a_texCoords_buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, texCoords, gl.STATIC_DRAW);
+    gl.vertexAttribPointer(a_texCoords_location, 2, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(a_texCoords_location);
+
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, bufferInd);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
+
+    gl.uniform3fv(u_color_location, colors);
+
+	gl.uniform3f(u_lightColor_location, 0.8, 0.8, 0.8);
+ 
+	gl.uniform3f(u_LightPosition_location, -2.8,-2.8,-2.8);
+
+	gl.uniform3f(u_AmbientLight_location, 0.9, 0.9, 0.9);
+	
+  
+    gl.uniformMatrix4fv(u_matrix_mvp_location, false, mvpMat.elements);
+	gl.uniformMatrix4fv(u_matrix_model_location, false, modelViewMat.elements);
+	gl.uniformMatrix4fv(u_light_matrix_model_location, false, lightmodelViewMat.elements);
+	gl.uniformMatrix4fv(u_matrix_normal_location, false, normalMat.elements);
+	
+	gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, textureObject);
+    gl.uniform1i(u_sampler_texture_location, 0);
+
+	gl.clear(gl.DEPTH_BUFFER_BIT);
+
+    gl.drawElements(gl.TRIANGLES, 3*12, gl.UNSIGNED_BYTE, 0);
+	if(keyPressed==0){
+		light_thetaY = light_thetaY + 0.5;
+		requestAnimationFrame(drawBinding);
+	}
+	
+}
+
+function createProgram(gl, vertexShaderSource, fragmentShaderSource) {
+
+  var vsh = gl.createShader( gl.VERTEX_SHADER );
+  gl.shaderSource( vsh, vertexShaderSource );
+  gl.compileShader( vsh );
+
+  var fsh = gl.createShader( gl.FRAGMENT_SHADER );
+  gl.shaderSource( fsh, fragmentShaderSource );
+  gl.compileShader( fsh );
+
+  var prog = gl.createProgram();
+  gl.attachShader( prog, vsh );
+  gl.attachShader( prog, fsh );
+  gl.linkProgram( prog );
+
+  return prog;
+}
+
+function loadTexture(textureObject, imageID) {
+	gl.bindTexture(gl.TEXTURE_2D, textureObject);
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+	gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
+	gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, document.getElementById(imageID));
+}
+
+function initGLLowerCover() {
+    var prog = createProgram( gl, vertexShaderSourceLowerCover, fragmentShaderSourceLowerCover );
+    gl.useProgram(prog);
+
+    a_coords_location = gl.getAttribLocation(prog, "a_coords");
+    a_coords_buffer = gl.createBuffer();
+
+    a_normals_location = gl.getAttribLocation(prog, "a_normals");
+    a_normals_buffer = gl.createBuffer();
+   
+    a_texCoords_location = gl.getAttribLocation(prog, "a_texCoords");
+    a_texCoords_buffer = gl.createBuffer();
+	
+	u_sampler_texture_location = gl.getUniformLocation(prog, "u_sampler_texture");
+    textureObject = gl.createTexture();
+    loadTexture(textureObject, "bookcover");
+   
+    bufferInd = gl.createBuffer();
+    u_matrix_mvp_location = gl.getUniformLocation(prog, "u_ModelViewProjection_matrix");
+	u_matrix_model_location = gl.getUniformLocation(prog, "u_ModelView_matrix");
+	u_light_matrix_model_location = gl.getUniformLocation(prog, "u_LightModelView_matrix");
+	u_matrix_normal_location = gl.getUniformLocation(prog, "u_Normal_matrix");
+	
+	u_color_location = gl.getUniformLocation(prog, "u_Color");
+	u_lightColor_location = gl.getUniformLocation(prog, "u_LightColor");
+    u_LightPosition_location = gl.getUniformLocation(prog, "u_LightPosition");
+    u_AmbientLight_location = gl.getUniformLocation(prog, "u_AmbientLight");
+
+}
+
+function initGLPages() {
+    var prog1 = createProgram( gl, vertexShaderSourcePages, fragmentShaderSourcePages );
+    gl.useProgram(prog1);
+
+    a_coords_location = gl.getAttribLocation(prog1, "a_coords");
+    a_coords_buffer = gl.createBuffer();
+
+    a_normals_location = gl.getAttribLocation(prog1, "a_normals");
+    a_normals_buffer = gl.createBuffer();
+   
+    a_texCoords_location = gl.getAttribLocation(prog1, "a_texCoords");
+    a_texCoords_buffer = gl.createBuffer();
+	
+	u_sampler_texture_location = gl.getUniformLocation(prog1, "u_sampler_texture");
+    textureObject = gl.createTexture();
+    loadTexture(textureObject, "bookpages");
+   
+    bufferInd = gl.createBuffer();
+    u_matrix_mvp_location = gl.getUniformLocation(prog1, "u_ModelViewProjection_matrix");
+	u_matrix_model_location = gl.getUniformLocation(prog1, "u_ModelView_matrix");
+	u_light_matrix_model_location = gl.getUniformLocation(prog1, "u_LightModelView_matrix");
+	u_matrix_normal_location = gl.getUniformLocation(prog1, "u_Normal_matrix");
+	
+	u_color_location = gl.getUniformLocation(prog1, "u_Color");
+	u_lightColor_location = gl.getUniformLocation(prog1, "u_LightColor");
+    u_LightPosition_location = gl.getUniformLocation(prog1, "u_LightPosition");
+    u_AmbientLight_location = gl.getUniformLocation(prog1, "u_AmbientLight");
+
+}
+
+function initGLUpperCover() {
+    var prog2 = createProgram( gl, vertexShaderSourceUpperCover, fragmentShaderSourceUpperCover );
+    gl.useProgram(prog2);
+
+    a_coords_location = gl.getAttribLocation(prog2, "a_coords");
+    a_coords_buffer = gl.createBuffer();
+
+    a_normals_location = gl.getAttribLocation(prog2, "a_normals");
+    a_normals_buffer = gl.createBuffer();
+   
+    a_texCoords_location = gl.getAttribLocation(prog2, "a_texCoords");
+    a_texCoords_buffer = gl.createBuffer();
+	
+	u_sampler_texture_location = gl.getUniformLocation(prog2, "u_sampler_texture");
+    textureObject = gl.createTexture();
+    loadTexture(textureObject, "bookcover");
+   
+    bufferInd = gl.createBuffer();
+    u_matrix_mvp_location = gl.getUniformLocation(prog2, "u_ModelViewProjection_matrix");
+	u_matrix_model_location = gl.getUniformLocation(prog2, "u_ModelView_matrix");
+	u_light_matrix_model_location = gl.getUniformLocation(prog2, "u_LightModelView_matrix");
+	u_matrix_normal_location = gl.getUniformLocation(prog2, "u_Normal_matrix");
+	
+	u_color_location = gl.getUniformLocation(prog2, "u_Color");
+	u_lightColor_location = gl.getUniformLocation(prog2, "u_LightColor");
+    u_LightPosition_location = gl.getUniformLocation(prog2, "u_LightPosition");
+    u_AmbientLight_location = gl.getUniformLocation(prog2, "u_AmbientLight");
+
+}
+
+function initGLBinding() {
+    var prog3 = createProgram( gl, vertexShaderSourcePages, fragmentShaderSourcePages );
+    gl.useProgram(prog3);
+
+    a_coords_location = gl.getAttribLocation(prog3, "a_coords");
+    a_coords_buffer = gl.createBuffer();
+
+    a_normals_location = gl.getAttribLocation(prog3, "a_normals");
+    a_normals_buffer = gl.createBuffer();
+   
+    a_texCoords_location = gl.getAttribLocation(prog3, "a_texCoords");
+    a_texCoords_buffer = gl.createBuffer();
+	
+	u_sampler_texture_location = gl.getUniformLocation(prog3, "u_sampler_texture");
+    textureObject = gl.createTexture();
+    loadTexture(textureObject, "bookbinding");
+   
+    bufferInd = gl.createBuffer();
+    u_matrix_mvp_location = gl.getUniformLocation(prog3, "u_ModelViewProjection_matrix");
+	u_matrix_model_location = gl.getUniformLocation(prog3, "u_ModelView_matrix");
+	u_light_matrix_model_location = gl.getUniformLocation(prog3, "u_LightModelView_matrix");
+	u_matrix_normal_location = gl.getUniformLocation(prog3, "u_Normal_matrix");
+	
+	u_color_location = gl.getUniformLocation(prog3, "u_Color");
+	u_lightColor_location = gl.getUniformLocation(prog3, "u_LightColor");
+    u_LightPosition_location = gl.getUniformLocation(prog3, "u_LightPosition");
+    u_AmbientLight_location = gl.getUniformLocation(prog3, "u_AmbientLight");
+
+}
+
+function init() {
+    var canvas = document.getElementById("webglcanvas");
+    gl = canvas.getContext("webgl");
+	
+	model();
+    
+	initGLLowerCover();
+	drawLowerCover();
+	
+	initGLPages();
+	drawPages();
+	initGLBinding();
+	drawBinding();
+	
+	initGLUpperCover();
+	drawUpperCoverClosed();
+	
+	
+		
+}
+
+
+var canvas = document.getElementById("webglcanvas");
+canvas.onclick = function ()
+	{  
+		clickCount = clickCount + 1;
+		
+		if(clickCount%2==0){
+			initGLLowerCover();
+			drawLowerCover();
+			
+			initGLPages();
+			drawPages();
+			initGLBinding();
+			drawBinding();
+			
+			initGLUpperCover();
+			drawUpperCoverClosed();
+		}
+		else{
+			initGLLowerCover();
+			drawLowerCover();
+	
+			initGLPages();
+			drawPages();
+			initGLBinding();
+			drawBinding();
+			
+			initGLUpperCover();
+			drawUpperCoverOpen();
+		}
+	};
+
+window.addEventListener('keydown',this.check,false); 
+	function check(e) {
+    var code = e.keyCode;
+	
+	
+	light_thetaY=320;
+	
+	//LEFT KEY
+	if(code==37&&changeXe<0.2)
+	{
+	changeXe=changeXe-0.1;
+	keyPressed=1;
+	}
+	
+	//RIGHT KEY
+    else if (code == 39&&changeXe>-0.2){
+	changeXe=changeXe+0.1;
+	keyPressed=1;	
+    }
+	
+	//UP KEY
+    else if(code==40&&changeYe<0.2){
+	changeYe=changeYe-0.1;
+	keyPressed=1;	
+	}
+	
+	//DOWN LEY
+	else if(code==38&&changeYe>-0.1)
+	{	
+	changeYe=changeYe+0.1;
+	keyPressed=1;
+	}
+	
+	if(clickCount%2==0){
+		initGLLowerCover();
+		drawLowerCover();
+		
+		initGLPages();
+		drawPages();
+		initGLBinding();
+		drawBinding();
+		
+		initGLUpperCover();
+		drawUpperCoverClosed();
+	}
+	else{
+		initGLLowerCover();
+		drawLowerCover();
+
+		initGLPages();
+		drawPages();
+		initGLBinding();
+		drawBinding();
+		
+		initGLUpperCover();
+		drawUpperCoverOpen();
+	}
+	
+}
+</script>
+
+<body onload="init()"> </body>
+<h4>Press Left Arrow to Move Camera Left, Right Arrow to Move Camera Right,
+Press Up Arrow to Move Camera Up, Down Arrow to Move Camera Down</h4>
+<h4>Click Left Mouse Key to open/close cover</h4>
+</html>
